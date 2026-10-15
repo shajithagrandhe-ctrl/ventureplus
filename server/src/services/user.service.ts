@@ -9,7 +9,6 @@ const userSelect = {
   role: true,
   department: true,
   position: true,
-  adminCode: true,
   employeeId: true,
   phoneNumber: true,
   address: true,

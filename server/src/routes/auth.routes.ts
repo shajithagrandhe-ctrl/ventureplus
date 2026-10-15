@@ -1,11 +1,16 @@
 import { Router } from "express";
 import { z } from "zod";
 import { validate } from "../middleware/validate.js";
-import { changePassword, createCustomerAccount, getCsrfToken, login, logout, me, register } from "../controllers/auth.controller.js";
+import { changePassword, createCustomerAccount, getCsrfToken, login, logout, me, nativeLogin, register } from "../controllers/auth.controller.js";
+import rateLimit from "express-rate-limit";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
+router.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -27,7 +32,15 @@ const registerSchema = z.object({
 });
 
 router.get("/csrf", asyncHandler(getCsrfToken));
-router.post("/login", validate({ body: loginSchema }), asyncHandler(login));
+const loginLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { success: false, message: "Too many login attempts. Try again later." }
+});
+router.post("/login", loginLimit, validate({ body: loginSchema }), asyncHandler(login));
+router.post("/native/login", loginLimit, validate({ body: loginSchema }), asyncHandler(nativeLogin));
 router.post("/register", validate({ body: registerSchema }), asyncHandler(register));
 router.post("/logout", asyncHandler(logout));
 router.get("/me", requireAuth, asyncHandler(me));

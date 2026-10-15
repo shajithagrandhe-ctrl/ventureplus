@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import type { Request, Response, NextFunction } from "express";
 import { env } from "../config/env.js";
+import { verifyAccessToken } from "./tokens.js";
 
 const cookieOptions = {
   httpOnly: false,
@@ -20,6 +21,23 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
   const method = req.method.toUpperCase();
   if (["GET", "HEAD", "OPTIONS"].includes(method)) {
     return next();
+  }
+
+  if (method === "POST" && req.path === "/api/auth/native/login") {
+    return next();
+  }
+
+  const authorization = req.header("authorization");
+  if (authorization?.startsWith("Bearer ")) {
+    try {
+      verifyAccessToken(authorization.slice(7).trim());
+      return next();
+    } catch {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired token"
+      });
+    }
   }
 
   const headerToken = req.header("x-csrf-token");

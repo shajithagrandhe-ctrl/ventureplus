@@ -47,6 +47,26 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+export const nativeLogin = async (req: Request, res: Response) => {
+  try {
+    const { email, password, adminCode } = req.body;
+    const { user, token } = await loginUser(email, password, adminCode);
+
+    return res.json({
+      success: true,
+      data: { user, token },
+      message: "Login successful"
+    });
+  } catch (error: any) {
+    const message = error?.message || "Login failed";
+    const status = message.toLowerCase().includes("invalid") || message.toLowerCase().includes("required") ? 401 : 500;
+    return res.status(status).json({
+      success: false,
+      message
+    });
+  }
+};
+
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, displayName, fullName, role, department, position, employeeId, phoneNumber, address } = req.body;

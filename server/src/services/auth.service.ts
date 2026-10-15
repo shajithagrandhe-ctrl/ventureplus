@@ -163,7 +163,6 @@ export const loginUser = async (email: string, password: string, adminCode?: str
       role: userRecord.role,
       department: userRecord.department,
       position: userRecord.position,
-      adminCode: userRecord.adminCode,
       employeeId: userRecord.employeeId,
       phoneNumber: userRecord.phoneNumber,
       address: userRecord.address,

@@ -11,6 +11,7 @@
     "prestart": "npm run build",
     "start": "node dist/server.js",
     "lint": "eslint .",
+    "test": "npm run build && node --test tests/native-auth.test.mjs",
     "prisma:generate": "prisma generate --schema ../database/schema.prisma && node ./scripts/sync-prisma-client.mjs",
     "prisma:migrate": "prisma db push --schema ../database/schema.prisma && node scripts/mongodb-indexes.mjs",
     "prisma:deploy": "prisma db push --schema ../database/schema.prisma && node scripts/mongodb-indexes.mjs",
