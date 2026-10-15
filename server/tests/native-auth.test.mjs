@@ -83,4 +83,13 @@ test("native bearer authentication preserves cookie CSRF protection", async (t) 
     newPassword: randomBytes(16).toString("hex")
   }, "invalid-token")).status, 401);
   assert.equal((await post("/auth/logout", {}, token)).status, 200);
+  const previousLookup = prisma.user.findUnique;
+  try {
+    prisma.user.findUnique = async () => { throw new Error("private-database-detail-fixture"); };
+    const failedLogin = await post("/auth/native/login", { email: record.email, password });
+    assert.equal(failedLogin.status, 500);
+    const body = await failedLogin.json();
+    assert.equal(body.message, "Unable to sign in. Please try again later.");
+    assert(!JSON.stringify(body).includes("private-database-detail-fixture"));
+  } finally { prisma.user.findUnique = previousLookup; }
 });

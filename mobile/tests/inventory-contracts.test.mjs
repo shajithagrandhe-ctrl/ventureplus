@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { agentSchema, assetUrl, batchSchema, createSchema, filterSchema, geometryBatch, idSchema, inquirySchema, normalize, plotEditSchema, polygonSchema, rectangle, regionsSchema } from "../src/features/inventory/contracts.ts";
+import { agentSchema, assetUrl, batchSchema, createSchema, filterSchema, geometryBatch, idSchema, inquirySchema, MAX_ASSET_BYTES, mediaKindFromContentType, mediaKindFromUrl, normalize, plotEditSchema, polygonSchema, rectangle, regionsSchema } from "../src/features/inventory/contracts.ts";
+
+test("extensionless database assets use MIME types rather than guessing an image", () => {
+  assert.equal(mediaKindFromUrl("https://example.test/uploads/assets/uuid"), "unknown");
+  assert.equal(mediaKindFromContentType("application/pdf; charset=binary"), "pdf");
+  assert.equal(mediaKindFromContentType("image/svg+xml"), "svg");
+  assert.equal(mediaKindFromContentType("image/png"), "image");
+  assert.equal(mediaKindFromContentType("text/html"), "unknown");
+  assert.equal(mediaKindFromUrl("https://example.test/layout.PDF?version=2"), "pdf");
+  assert.equal(mediaKindFromUrl("https://example.test/layout.svg"), "svg");
+  assert.equal(MAX_ASSET_BYTES, 4194304);
+});
 
 const id = "d9428888-122b-4e7d-9ab7-a2b6edbb1234";
 const points = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }];

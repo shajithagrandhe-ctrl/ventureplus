@@ -12,8 +12,9 @@ import { useAuth } from "../../auth/AuthProvider";
 import { Button, Card, ErrorMessage, Field, Pill, Section } from "../../components/ui";
 import { theme } from "../../theme";
 import { Page, Select, Values, QueryState, Pager, RecordList, useEndpoint, usePaged, useWrite, encoded, canEdit } from "../common";
-import { agentSchema, assetUrl, createSchema, favoriteSchema, filterSchema, idSchema, inquirySchema, locationSchema, plotEditSchema, plotLeadSchema, plotSchema, statusSchema, validationMessage, ventureSchema, type Plot } from "./contracts";
+import { agentSchema, assetUrl, createSchema, favoriteSchema, filterSchema, idSchema, inquirySchema, locationSchema, MAX_ASSET_BYTES, plotEditSchema, plotLeadSchema, plotSchema, statusSchema, validationMessage, ventureSchema, type Plot } from "./contracts";
 import { InlineNotice, InventoryHero, InventoryPanel, Metric, StatusBadge, Utility } from "./ui";
+import { useMediaKind } from "./media";
 
 export function InventoryGate({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) {
   const { user, loading } = useAuth();
@@ -106,10 +107,12 @@ export function Locations({ id }: { id: string }) {
 
 export function Media({ source, compact = false }: { source?: string | null; compact?: boolean }) {
   const url = assetUrl(source);
+  const media = useMediaKind(url);
   const [failedUrl, fail] = useState<string>();
   const failed = failedUrl === url;
   if (!url) return <View style={[styles.mediaFallback, compact && styles.mediaCompact]}><ImageIcon size={28} color={theme.colors.subtle} /><Text style={styles.mediaFallbackText}>No media available</Text></View>;
-  if (/\.(pdf|svg)(?:\?|$)/i.test(url)) return <View style={styles.documentSurface}>
+  if (media.loading) return <View style={[styles.mediaFallback, compact && styles.mediaCompact]}><Text style={styles.mediaFallbackText}>Loading media...</Text></View>;
+  if (media.kind !== "image") return <View style={styles.documentSurface}>
     <View style={styles.documentIcon}><FileText size={24} color={theme.colors.primary} /></View>
     <View style={styles.flex}><Text style={styles.documentTitle}>Venture document</Text><Text style={styles.cardMeta}>Open the original file</Text></View>
     <Pressable accessibilityRole="button" accessibilityLabel="Open document" onPress={() => { void Linking.openURL(url).catch(() => fail(url)); }} style={styles.openIcon}><ExternalLink size={19} color={theme.colors.primary} /></Pressable>
@@ -161,7 +164,7 @@ export function PlotDetail({ id }: { id: string }) {
   const operational = canEdit(user?.role);
   const q = useEndpoint(plotSchema, "/plots/" + encoded(id));
   const saved = useEndpoint(z.array(favoriteSchema), "/favorites");
-  const leads = useEndpoint(z.array(plotLeadSchema), "/plots/" + encoded(id) + "/leads", {}, operational);
+  const leads = usePaged(plotLeadSchema, "/plots/" + encoded(id) + "/leads", {}, operational);
   const write = useWrite();
   const [error, setError] = useState("");
   const favorite = saved.data?.data.some(item => item.plotId === id);
@@ -188,11 +191,12 @@ export function PlotDetail({ id }: { id: string }) {
       <Button icon={Map} title="View venture layout" secondary onPress={() => go("/inventory/layout/" + encoded(q.data.data.ventureId))} />
       {canEdit(user?.role) ? <PlotEdit key={id} plot={q.data.data} blocked={!!q.error} /> : null}
       {operational ? <Section title="Associated leads">
-        <QueryState query={leads} empty={!leads.data?.data.length} />
-        {leads.data?.data.map(lead => <InventoryPanel key={lead.id}>
+        <QueryState query={leads} empty={!leads.rows.length} />
+        {leads.rows.map(lead => <InventoryPanel key={lead.id}>
           <View style={styles.titleRow}><View style={styles.leadAvatar}><UserRound size={19} color={theme.colors.primary} /></View><View style={styles.flex}><Text style={styles.cardTitle}>{lead.customerName}</Text>{lead.status ? <Pill label={lead.status} tone="info" /> : null}</View></View>
           <Values values={{ Email: lead.email, Contact: lead.contactNumber, Location: lead.location, "Unique ID": lead.uniqueId, Notes: lead.notes }} />
         </InventoryPanel>)}
+        <Pager {...leads} />
       </Section> : null}
     </> : null}
     <ErrorMessage message={error} />
@@ -332,7 +336,7 @@ function MediaUpload({ id, blocked = false }: { id: string; blocked?: boolean })
       const file = result.assets[0];
       const mime = file.mimeType ?? "";
       const extensions: Record<string, string[]> = { "application/pdf": ["pdf"], "image/png": ["png"], "image/jpeg": ["jpg", "jpeg"], "image/jpg": ["jpg", "jpeg"], "image/svg+xml": ["svg"], "image/webp": ["webp"] };
-      if (!types.includes(mime) || !extensions[mime]?.includes(file.name.split(".").pop()?.toLowerCase() ?? "") || file.size === undefined || file.size > (kind === "layout" ? 20 : 10) * 1024 * 1024) throw new Error("Unsupported file type or file too large (layout 20 MB, photo 10 MB).");
+      if (!types.includes(mime) || !extensions[mime]?.includes(file.name.split(".").pop()?.toLowerCase() ?? "") || file.size === undefined || file.size > MAX_ASSET_BYTES) throw new Error("Unsupported file type or file too large (maximum 4 MB).");
       const body = new FormData();
       if (Platform.OS === "web" && file.file) body.append(kind, file.file, file.name);
       else body.append(kind, { uri: file.uri, name: file.name, type: mime } as unknown as Blob);

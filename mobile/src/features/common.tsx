@@ -23,9 +23,9 @@ export function useEndpoint<T>(schema: z.ZodType<T>, path: string, params: Query
       return { ...response, data: schema.parse(response.data) } as ApiResponse<T>;
     } });
 }
-export function usePaged<T>(schema: z.ZodType<T>, path: string, params: QueryParams = {}) {
+export function usePaged<T>(schema: z.ZodType<T>, path: string, params: QueryParams = {}, enabled = true) {
   const [page, setPage] = useState(1);
-  const query = useEndpoint(z.array(schema), path, { ...params, page, pageSize: 30 });
+  const query = useEndpoint(z.array(schema), path, { ...params, page, pageSize: 30 }, enabled);
   return { ...query, page, setPage, rows: query.data?.data ?? [], pagination: query.data?.pagination };
 }
 export function useWrite() {

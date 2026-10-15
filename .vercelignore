@@ -1,0 +1,11 @@
+artifacts/
+mobile/
+docs/screenshots/
+**/node_modules/
+**/dist/
+**/coverage/
+.git/
+.env
+.env.*
+**/.env
+**/.env.*

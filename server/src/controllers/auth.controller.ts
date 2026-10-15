@@ -15,6 +15,17 @@ const accessCookieOptions = {
   ...(env.cookieDomain ? { domain: env.cookieDomain } : {})
 };
 
+const loginFailure = (res: Response, error: unknown) => {
+  const message = error instanceof Error ? error.message : "";
+  if (["Invalid email or password", "Invalid admin code"].includes(message)) {
+    return res.status(401).json({ success: false, message });
+  }
+  if (message === "Employee account is frozen") {
+    return res.status(403).json({ success: false, message });
+  }
+  return res.status(500).json({ success: false, message: "Unable to sign in. Please try again later." });
+};
+
 export const getCsrfToken = (_req: Request, res: Response) => {
   const token = issueCsrfToken(res);
   return res.json({
@@ -37,13 +48,8 @@ export const login = async (req: Request, res: Response) => {
       data: { user },
       message: "Login successful"
     });
-  } catch (error: any) {
-    const message = error?.message || "Login failed";
-    const status = message.toLowerCase().includes("invalid") || message.toLowerCase().includes("required") ? 401 : 500;
-    return res.status(status).json({
-      success: false,
-      message
-    });
+  } catch (error: unknown) {
+    return loginFailure(res, error);
   }
 };
 
@@ -57,13 +63,8 @@ export const nativeLogin = async (req: Request, res: Response) => {
       data: { user, token },
       message: "Login successful"
     });
-  } catch (error: any) {
-    const message = error?.message || "Login failed";
-    const status = message.toLowerCase().includes("invalid") || message.toLowerCase().includes("required") ? 401 : 500;
-    return res.status(status).json({
-      success: false,
-      message
-    });
+  } catch (error: unknown) {
+    return loginFailure(res, error);
   }
 };
 

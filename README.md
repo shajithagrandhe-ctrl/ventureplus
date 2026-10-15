@@ -8,6 +8,13 @@ EstateHub is a fullÃ¢â‚¬â€˜stack real estate management platform built
 
 This README documents **how this repo is structured, how to run it locally, and how the main flows work**.
 
+## Mobile Integration
+
+For the current mobile/shared-backend implementation, APK delivery, test results
+and remaining production deployment requirements, see
+[Prompt 2 status](docs/PROMPT_2_STATUS.md) and
+[production verification](docs/PRODUCTION_VERIFICATION.md).
+
 ## Tech Stack
 
 - Frontend: Vite + React + TypeScript, shadcn-ui, Tailwind CSS

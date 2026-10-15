@@ -9,6 +9,7 @@ import { theme } from "../../theme";
 import { Page, QueryState, Select, encoded, useEndpoint, useWrite } from "../common";
 import { assetUrl, geometryBatch, normalize, polygonSchema, rectangle, regionsSchema, validationMessage, ventureSchema, type Plot, type Point, type Regions, type Venture } from "./contracts";
 import { InlineNotice, InventoryHero, InventoryPanel, statusColors, Utility } from "./ui";
+import { useMediaKind } from "./media";
 
 type Draft = { plots: Plot[]; regions: Regions; changed: string[]; regionsChanged: boolean };
 
@@ -39,14 +40,16 @@ function LayoutEditor({ venture, blocked }: { venture: Venture; blocked: boolean
   const [svgAst, setSvgAst] = useState<ReturnType<typeof parse>>(null);
   const [regionIndex, setRegionIndex] = useState("");
   const uri = assetUrl(venture.layoutImage);
-  const pdf = !!uri && /\.pdf(?:\?|$)/i.test(uri);
-  const svg = !!uri && /\.svg(?:\?|$)/i.test(uri);
+  const media = useMediaKind(uri);
+  const pdf = media.kind === "pdf";
+  const svg = media.kind === "svg";
+  const unknownMedia = !!uri && !media.loading && media.kind === "unknown";
   const drawing = admin && mode !== "view";
 
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    if (uri && !pdf && !svg) Image.getSize(uri, (w, h) => { if (active && w > 0 && h > 0) setRatio(w / h); }, () => { if (active) setMediaFailed(true); });
+    if (uri && media.kind === "image") Image.getSize(uri, (w, h) => { if (active && w > 0 && h > 0) setRatio(w / h); }, () => { if (active) setMediaFailed(true); });
     if (uri && svg) {
       const timeout = setTimeout(() => controller.abort(), 15000);
       void (async () => {
@@ -70,7 +73,7 @@ function LayoutEditor({ venture, blocked }: { venture: Venture; blocked: boolean
       })();
     }
     return () => { active = false; controller.abort(); };
-  }, [uri, pdf, svg]);
+  }, [uri, media.kind, svg]);
 
   const change = (next: Draft) => {
     setHistory(previous => [...previous, draft]);
@@ -140,7 +143,9 @@ function LayoutEditor({ venture, blocked }: { venture: Venture; blocked: boolean
   return <View style={styles.screen}>
     <InventoryHero icon={Map} eyebrow={venture.location?.name ?? "Plot planning"} title={venture.name} subtitle={admin ? "Inspect, select and edit plot geometry." : "Tap an outlined plot to open its details."} />
 
-    {pdf ? <Utility icon={ExternalLink} title="Open PDF layout" onPress={() => { if (uri) void Linking.openURL(uri).catch(error => setMessage(validationMessage(error))); }} /> : null}
+    {pdf || unknownMedia ? <Utility icon={ExternalLink} title={pdf ? "Open PDF layout" : "Open original layout"} onPress={() => { if (uri) void Linking.openURL(uri).catch(error => setMessage(validationMessage(error))); }} /> : null}
+    {media.loading ? <InlineNotice>Loading layout...</InlineNotice> : null}
+    {unknownMedia ? <InlineNotice>Layout preview unavailable.</InlineNotice> : null}
     {!uri || pdf || mediaFailed ? <InlineNotice tone={mediaFailed ? "warning" : "info"}>{pdf ? "PDF overlays use a normalized drawing surface." : mediaFailed ? "Layout image unavailable." : "No layout image uploaded."}</InlineNotice> : null}
     {!parsedRegions.success ? <ErrorMessage message="Existing region data is unsupported. Region editing is disabled." /> : null}
 
@@ -192,7 +197,7 @@ function LayoutEditor({ venture, blocked }: { venture: Venture; blocked: boolean
         <ScrollView horizontal scrollEnabled={!drawing} nestedScrollEnabled>
           <ScrollView scrollEnabled={!drawing} nestedScrollEnabled>
             <View style={{ width: surfaceWidth, height: surfaceHeight, backgroundColor: "#EEF2F5" }}>
-              {uri && !pdf && !mediaFailed && (svg ? <SvgAst ast={svgAst} override={{ width: surfaceWidth, height: surfaceHeight }} /> : <Image source={{ uri }} resizeMode="contain" style={{ position: "absolute", width: surfaceWidth, height: surfaceHeight }} onError={() => setMediaFailed(true)} />)}
+              {uri && !media.loading && !pdf && !unknownMedia && !mediaFailed && (svg ? <SvgAst ast={svgAst} override={{ width: surfaceWidth, height: surfaceHeight }} /> : <Image source={{ uri }} resizeMode="contain" style={{ position: "absolute", width: surfaceWidth, height: surfaceHeight }} onError={() => setMediaFailed(true)} />)}
               <Svg accessibilityLabel="Venture plot layout" width={surfaceWidth} height={surfaceHeight} viewBox="0 0 100 100" preserveAspectRatio="none" style={styles.svgOverlay}>
                 {(["roads", "parks"] as const).flatMap(kind => draft.regions[kind].map((region, index) => <Polygon key={kind + "-" + index} points={region.points.map(point => point.x * 100 + "," + point.y * 100).join(" ")} fill={kind === "parks" ? "#86D3A6" : "#CBD5E1"} fillOpacity={0.65} stroke={kind === "parks" ? theme.colors.available : theme.colors.muted} strokeWidth={0.3} />))}
                 {draft.plots.map(plot => {

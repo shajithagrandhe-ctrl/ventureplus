@@ -6,6 +6,8 @@ import type { AuthenticatedRequest } from "../middleware/auth.js";
 export const getLeadsByPlot = async (req: AuthenticatedRequest, res: Response) => {
   const result = await listLeads({
     plotId: req.params.plotId,
+    page: req.query.page ? Number(req.query.page) : undefined,
+    pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
     requester: { role: req.user?.role, email: req.user?.email }
   });
 

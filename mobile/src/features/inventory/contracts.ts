@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+export const MAX_ASSET_BYTES = 4 * 1024 * 1024;
+export type MediaKind = "pdf" | "svg" | "image" | "unknown";
+export function mediaKindFromContentType(contentType: string | null): MediaKind {
+  const mime = contentType?.split(";", 1)[0].trim().toLowerCase();
+  if (mime === "application/pdf") return "pdf";
+  if (mime === "image/svg+xml") return "svg";
+  return mime?.startsWith("image/") ? "image" : "unknown";
+}
+export function mediaKindFromUrl(uri?: string): MediaKind {
+  if (!uri) return "unknown";
+  try {
+    const path = new URL(uri).pathname;
+    if (/\.pdf$/i.test(path)) return "pdf";
+    if (/\.svg$/i.test(path)) return "svg";
+    return /\.(png|jpe?g|webp|gif|avif|bmp)$/i.test(path) ? "image" : "unknown";
+  } catch { return "unknown"; }
+}
+
 export const idSchema = z.string().uuid();
 export const statusSchema = z.enum(["AVAILABLE", "ADVANCE", "SOLD"]);
 const unit = z.number().finite().min(0).max(1);
