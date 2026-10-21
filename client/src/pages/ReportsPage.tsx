@@ -27,7 +27,7 @@ interface CustomerReport {
   uniqueId: string;
   pricePerSqYard: number;
   paymentMethod: "online" | "cash";
-  notes?: string;
+  notes: string;
   photo?: string;
   status: LeadStatus;
   assignedAgent: string;
@@ -69,7 +69,7 @@ const mapLeadToReport = (lead: Lead): CustomerReport => {
     uniqueId: lead.uniqueId,
     pricePerSqYard: lead.pricePerSqYard,
     paymentMethod: "online",
-    notes: lead.notes,
+    notes: lead.notes ?? "",
     photo: lead.photoUrl,
     status: mapLeadStatus(lead.status),
     assignedAgent: lead.plot?.venture?.name ? "Assigned" : "Unassigned",

@@ -10,6 +10,11 @@ This README documents **how this repo is structured, how to run it locally, and 
 
 ## Mobile Integration
 
+For the current authentication repair, API contract, test evidence and release
+blockers, see [authentication repair status](docs/AUTH_REPAIR_STATUS.md) and
+[shared authentication contract](docs/AUTHENTICATION_CONTRACT.md). These supersede
+earlier delivery notes for the repair branch; no production release is claimed.
+
 For the current mobile/shared-backend implementation, APK delivery, test results
 and remaining production deployment requirements, see
 [Prompt 2 status](docs/PROMPT_2_STATUS.md) and

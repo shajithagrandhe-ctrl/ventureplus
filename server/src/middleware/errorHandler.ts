@@ -6,6 +6,11 @@ import { env } from "../config/env.js";
 import { HttpError } from "../utils/httpError.js";
 
 export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  // Body-parser errors carry the submitted raw body; never log or return it.
+  if (err && typeof err === "object" && "type" in err && err.type === "entity.parse.failed") {
+    return res.status(400).json({ success: false, message: "Malformed JSON request" });
+  }
+
   if (err instanceof HttpError) {
     return res.status(err.statusCode).json({
       success: false,

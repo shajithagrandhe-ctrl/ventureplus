@@ -107,14 +107,22 @@ export const changeOwnPassword = async (input: {
   });
 };
 
-export const loginUser = async (email: string, password: string, adminCode?: string) => {
-  const userRecord = await getUserByEmail(email);
+export const loginUser = async (email: string, password: string, adminCode?: string, expectedRole?: UserRole) => {
+  // Preserve legacy mixed-case identities, then accept case variations for the
+  // usual lowercase accounts without changing stored email addresses.
+  const userRecord = await getUserByEmail(email) ??
+    (email !== email.toLowerCase() ? await getUserByEmail(email.toLowerCase()) : null);
   if (!userRecord) {
     throw new Error("Invalid email or password");
   }
 
   const isValid = await verifyPassword(password, userRecord.passwordHash);
   if (!isValid) {
+    throw new Error("Invalid email or password");
+  }
+
+  if (!Object.values(PrismaClient.UserRole).includes(userRecord.role) ||
+      (expectedRole && userRecord.role !== expectedRole)) {
     throw new Error("Invalid email or password");
   }
 

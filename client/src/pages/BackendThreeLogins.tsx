@@ -195,9 +195,7 @@ const BackendThreeLogins = () => {
         role: "EMPLOYEE",
         department: activeTab === "employee" ? department : undefined,
         position: activeTab === "employee" ? position : undefined,
-        employeeId: activeTab === "employee" ? employeeId : undefined,
-        phoneNumber: activeTab === "customer" ? phone : undefined,
-        address: activeTab === "customer" ? address : undefined
+        employeeId
       });
 
       toast.success(`${user.displayName} account created successfully!`);

@@ -6,6 +6,7 @@ import { changeOwnPassword, createCustomerCredentials, loginUser, registerUser }
 import { getUserById } from "../services/user.service.js";
 import type { AuthenticatedRequest } from "../middleware/auth.js";
 import { publishEvent } from "../realtime/events.js";
+import { logger } from "../config/logger.js";
 
 const accessCookieOptions = {
   httpOnly: true,
@@ -23,6 +24,8 @@ const loginFailure = (res: Response, error: unknown) => {
   if (message === "Employee account is frozen") {
     return res.status(403).json({ success: false, message });
   }
+  // Classify infrastructure failures without logging DB URLs, queries or credentials.
+  logger.error({ event: "auth_backend_failure" }, "Authentication backend failed");
   return res.status(500).json({ success: false, message: "Unable to sign in. Please try again later." });
 };
 
@@ -37,8 +40,8 @@ export const getCsrfToken = (_req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password, adminCode } = req.body;
-    const { user, token } = await loginUser(email, password, adminCode);
+    const { email, password, adminCode, expectedRole } = req.body;
+    const { user, token } = await loginUser(email, password, adminCode, expectedRole);
 
     res.cookie(env.accessTokenCookieName, token, accessCookieOptions);
     issueCsrfToken(res);
@@ -55,8 +58,8 @@ export const login = async (req: Request, res: Response) => {
 
 export const nativeLogin = async (req: Request, res: Response) => {
   try {
-    const { email, password, adminCode } = req.body;
-    const { user, token } = await loginUser(email, password, adminCode);
+    const { email, password, adminCode, expectedRole } = req.body;
+    const { user, token } = await loginUser(email, password, adminCode, expectedRole);
 
     return res.json({
       success: true,

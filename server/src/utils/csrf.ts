@@ -23,7 +23,8 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
-  if (method === "POST" && req.path === "/api/auth/native/login") {
+  // Match Express's case-insensitive route and optional trailing slash semantics.
+  if (method === "POST" && /^\/api\/auth\/native\/login\/?$/i.test(req.path)) {
     return next();
   }
 

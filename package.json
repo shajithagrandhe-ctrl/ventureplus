@@ -6,10 +6,11 @@
     "server"
   ],
   "scripts": {
+    "test:csrf": "node --experimental-strip-types --test client/tests/csrf-fetch.test.mjs",
     "dev": "node ./node_modules/concurrently/dist/bin/concurrently.js -n client,server \"npm run dev -w client\" \"npm run dev -w server\"",
     "build": "npm run build -w client && npm run build -w server",
     "lint": "npm run lint -w client && npm run lint -w server",
-    "test": "npm run test -w client && npm run test -w server && npm --prefix mobile test && npm --prefix mobile run test:components",
+    "test": "npm run test -w client && npm run test -w server && npm --prefix mobile test && npm --prefix mobile run test:components && npm run test:csrf",
     "prisma:generate": "npm run prisma:generate -w server"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "./api-config";
+import { createCsrfFetch } from "./csrf-fetch";
 const API_ORIGIN = API_BASE_URL.replace(/\/api$/, "");
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME || "estatehub_csrf";
 
@@ -146,11 +147,11 @@ const getCookie = (name: string) => {
 
 const decodeHtmlEntities = (value: string) =>
   value
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&amp;", "&")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'");
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 
 const extractMeaningfulText = (text: string, contentType: string) => {
   if (contentType.includes("text/html")) {
@@ -194,42 +195,16 @@ const readApiErrorMessage = async (response: Response) => {
   }
 };
 
-const ensureCsrfToken = async () => {
-  const existing = getCookie(CSRF_COOKIE_NAME);
-  if (existing) return existing;
-
-  const response = await fetch(`${API_BASE_URL}/auth/csrf`, {
-    credentials: "include"
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to obtain CSRF token");
-  }
-
-  const payload = await response.json();
-  return payload?.data?.token as string;
-};
+const csrfFetch = createCsrfFetch({ baseUrl: API_BASE_URL, readCookie: () => getCookie(CSRF_COOKIE_NAME) });
 
 const apiFetch = async <T>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
   const method = (options.method || "GET").toUpperCase();
-  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
-    try {
-      await ensureCsrfToken();
-    } catch (err) {
-      if (import.meta.env.PROD) throw err;
-    }
-  }
-
-  const csrfToken = getCookie(CSRF_COOKIE_NAME);
-  const headers = {
-    "Content-Type": "application/json",
-    ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
-    ...(options.headers || {})
-  };
+  const headers = new Headers(options.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await csrfFetch(path, {
       ...options,
       headers,
       credentials: "include"
@@ -341,18 +316,10 @@ export const ventureApi = {
     const form = new FormData();
     form.append("layout", file);
 
-    try {
-      await ensureCsrfToken();
-    } catch {
-      // CSRF is only required in production; ignore failures in dev.
-    }
-
-    const csrfToken = getCookie(CSRF_COOKIE_NAME);
-    const response = await fetch(`${API_BASE_URL}/ventures/${id}/layout`, {
+    const response = await csrfFetch(`/ventures/${id}/layout`, {
       method: "POST",
       body: form,
-      credentials: "include",
-      headers: csrfToken ? { "x-csrf-token": csrfToken } : undefined
+      credentials: "include"
     });
 
     const contentType = response.headers.get("content-type") || "";
@@ -377,18 +344,10 @@ export const ventureApi = {
     const form = new FormData();
     form.append("photo", file);
 
-    try {
-      await ensureCsrfToken();
-    } catch {
-      // CSRF is only required in production; ignore failures in dev.
-    }
-
-    const csrfToken = getCookie(CSRF_COOKIE_NAME);
-    const response = await fetch(`${API_BASE_URL}/ventures/${id}/photo`, {
+    const response = await csrfFetch(`/ventures/${id}/photo`, {
       method: "POST",
       body: form,
-      credentials: "include",
-      headers: csrfToken ? { "x-csrf-token": csrfToken } : undefined
+      credentials: "include"
     });
 
     const contentType = response.headers.get("content-type") || "";

@@ -66,8 +66,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [hydrate]);
   const login = useCallback(async (credentials: Credentials) => {
     if (!api) throw new Error("API configuration unavailable");
-    const { expectedRole, ...body } = credentials;
-    const response = await api.request<{ user: User; token: string }>("/auth/native/login", { method: "POST", authenticated: false, body });
+    const { expectedRole } = credentials;
+    const response = await api.request<{ user: User; token: string }>("/auth/native/login", { method: "POST", authenticated: false, body: credentials });
     const session = loginSchema.parse(response.data);
     if (expectedRole && session.user.role !== expectedRole) {
       throw new Error(`This account belongs to the ${session.user.role.toLowerCase()} portal. Select the matching role and try again.`);

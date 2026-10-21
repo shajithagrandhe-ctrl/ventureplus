@@ -19,6 +19,8 @@ dist-ssr
 !.env.*.example
 .npm-cache/
 coverage/
+.verification/
+.tooling/
 uploads/
 
 # Editor directories and files

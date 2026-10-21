@@ -7,21 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Phone, MapPin, PieChart, User, Plus, Edit, Trash2, CheckCircle, XCircle, Users, TrendingUp } from "lucide-react";
-import { totalDataAPI } from "@/services/api";
+import { customerApi, type CustomerRecord } from "@/services/api";
 import { formatINRTextToUnits } from "@/lib/money";
 
-interface TotalDataEntry {
-  id: string;
-  contactName: string;
-  contactNumber: string;
-  location: string;
-  budget: string;
-  interested: boolean;
-  recordOwner: string;
-  notes: string;
-  createdAt: string;
-  lastUpdated: string;
-}
+type TotalDataEntry = CustomerRecord;
 
 const TotalDataForm = () => {
   const [entries, setEntries] = useState<TotalDataEntry[]>([]);
@@ -42,7 +31,7 @@ const TotalDataForm = () => {
   const fetchEntries = async () => {
     try {
       setLoading(true);
-      const response = await totalDataAPI.getAllTotalData();
+      const response = await customerApi.list();
       if (response.success) {
         setEntries(response.data);
       }
@@ -94,11 +83,11 @@ const TotalDataForm = () => {
 
       if (editingEntry) {
         // Update existing entry
-        await totalDataAPI.updateTotalDataEntry(editingEntry.id, entryData);
+        await customerApi.update(editingEntry.id, entryData);
         toast.success("Total data entry updated successfully");
       } else {
         // Create new entry
-        await totalDataAPI.createTotalDataEntry(entryData);
+        await customerApi.create(entryData);
         toast.success("Total data entry created successfully");
       }
 
@@ -120,7 +109,7 @@ const TotalDataForm = () => {
     setBudget(entry.budget);
     setInterested(entry.interested);
     setRecordOwner(entry.recordOwner);
-    setNotes(entry.notes);
+    setNotes(entry.notes ?? "");
     setShowForm(true);
   };
 
@@ -132,7 +121,7 @@ const TotalDataForm = () => {
 
     try {
       setLoading(true);
-      await totalDataAPI.deleteTotalDataEntry(id);
+      await customerApi.remove(id);
       toast.success("Total data entry deleted successfully");
       fetchEntries();
     } catch (error) {

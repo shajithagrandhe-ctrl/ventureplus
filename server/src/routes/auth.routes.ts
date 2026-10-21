@@ -13,10 +13,11 @@ router.use((_req, res, next) => {
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  adminCode: z.string().optional()
-});
+  email: z.string().trim().email().max(254),
+  password: z.string().min(6).max(1024),
+  adminCode: z.string().max(128).optional(),
+  expectedRole: z.enum(["ADMIN", "EMPLOYEE", "CUSTOMER", "AGENT"]).optional()
+}).strict();
 
 const registerSchema = z.object({
   email: z.string().email(),
