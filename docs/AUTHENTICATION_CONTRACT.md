@@ -1,6 +1,10 @@
 # Shared website and Android authentication
 
-Both clients use the existing Express API and Prisma MongoDB User collection.
+Both clients are intended to use the production website Express API and MySQL
+user records. That backend belongs to VenkataVyshnaviMondi/ventureplus123.
+This app repository also retains a separate legacy Prisma MongoDB backend; it is
+not the verified production database mapping. See the
+[current code checkpoint](CODE_CHECKPOINT_2026-10-22.md).
 There is no mobile-only account store. The Android client is Expo / React Native.
 
 ## Native sign-in
@@ -114,8 +118,9 @@ service. The SPA catch-all follows the API rewrites. The gateway test exercises
 the public proxy and real Express handlers with isolated Prisma fixtures.
 This is not a production Vercel deployment test or a real MongoDB write test.
 
-Required server environment names: DATABASE_URL (existing MongoDB replica set)
-and JWT_SECRET. Relevant names: NODE_ENV, JWT_EXPIRES_IN, CORS_ORIGIN,
+Required server environment names: DATABASE_URL and JWT_SECRET. The production
+website backend requires MySQL; the legacy backend in this app repository requires
+MongoDB. Never substitute one database configuration for the other. Relevant names: NODE_ENV, JWT_EXPIRES_IN, CORS_ORIGIN,
 COOKIE_SAMESITE, COOKIE_DOMAIN, CSRF_COOKIE_NAME, ACCESS_TOKEN_COOKIE_NAME,
 REALTIME_TRANSPORT and REALTIME_REDIS_URL when fanout is needed. The gateway
 uses the existing SERVER_INTERNAL_URL service binding. The website uses

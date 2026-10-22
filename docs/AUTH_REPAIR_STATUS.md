@@ -1,3 +1,7 @@
+> Historical record: the current repository mapping, repaired failures and latest local
+> results are in [the 22 October code checkpoint](CODE_CHECKPOINT_2026-10-22.md).
+> Earlier push/access/production statements below are historical, not current checks.
+
 # Venture Plus authentication repair — 21 October 2026
 
 ## Release condition
