@@ -1,12 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
 import { createApiClient, ApiError, validateApiUrl } from "../../../shared/api-client";
-import { USER_ROLES, type User } from "../../../shared/contracts";
+import type { User } from "../../../shared/contracts";
+import { userSchema, nativeSessionSchema } from "../../../shared/auth-contracts.ts";
 import { sessionStorage } from "../lib/session-storage";
 
-const userSchema = z.object({ id: z.string(), email: z.string().email(), displayName: z.string(), fullName: z.string(), role: z.enum(USER_ROLES) }).passthrough();
-const loginSchema = z.object({ user: userSchema, token: z.string().min(1) });
 type Credentials = { email: string; password: string; adminCode?: string; expectedRole?: User["role"] };
 type Auth = {
   user: User | null; loading: boolean; error: string | null; api: ReturnType<typeof createApiClient> | null;
@@ -68,7 +66,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!api) throw new Error("API configuration unavailable");
     const { expectedRole } = credentials;
     const response = await api.request<{ user: User; token: string }>("/auth/native/login", { method: "POST", authenticated: false, body: credentials });
-    const session = loginSchema.parse(response.data);
+    const session = nativeSessionSchema.parse(response.data);
     if (expectedRole && session.user.role !== expectedRole) {
       throw new Error(`This account belongs to the ${session.user.role.toLowerCase()} portal. Select the matching role and try again.`);
     }

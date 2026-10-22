@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { entityIdSchema } from "../../../../shared/entity-id.ts";
 
 export const MAX_ASSET_BYTES = 4 * 1024 * 1024;
 export type MediaKind = "pdf" | "svg" | "image" | "unknown";
@@ -18,7 +19,7 @@ export function mediaKindFromUrl(uri?: string): MediaKind {
   } catch { return "unknown"; }
 }
 
-export const idSchema = z.string().uuid();
+export const idSchema = entityIdSchema;
 export const statusSchema = z.enum(["AVAILABLE", "ADVANCE", "SOLD"]);
 const unit = z.number().finite().min(0).max(1);
 export const pointSchema = z.object({ x: unit, y: unit });

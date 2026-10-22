@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { entityIdSchema } from "../../../../shared/entity-id.ts";
 
-export const uuid = z.string().uuid();
+export const uuid = entityIdSchema;
 export const statusSchema = z.enum(["ACTIVE", "FROZEN"]);
 export const directoryKindSchema = z.enum(["admins", "employees", "customers"]);
 export type DirectoryKind = z.infer<typeof directoryKindSchema>;

@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { entityIdSchema } from "../../../../shared/entity-id.ts";
 
-export const uuid = z.string().uuid();
+export const uuid = entityIdSchema;
 export const leadStatuses = ["NEW", "FOLLOW_UP", "QUALIFIED", "WON", "LOST"] as const;
 export const recordStatuses = ["HOT_LEAD", "FOLLOWING_UP", "CONFIRMED_NOT_PAID", "PAID_ADVANCE", "BOOKED"] as const;
 export const trackingStatuses = ["ACTIVE", "INACTIVE", "MOVING"] as const;

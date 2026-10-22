@@ -9,9 +9,10 @@ import { useAuth, readableError } from "../auth/AuthProvider";
 import { Button, EmptyState, ErrorMessage, Screen, Heading } from "../components/ui";
 import { theme } from "../theme";
 import type { ApiResponse } from "../../../shared/contracts";
+import { entityIdSchema } from "../../../shared/entity-id.ts";
 
 export type QueryParams = Record<string, string | number | boolean | undefined>;
-export const routeId = z.string().uuid();
+export const routeId = entityIdSchema;
 export const encoded = (id: string) => encodeURIComponent(routeId.parse(id));
 export const canEdit = (role?: string) => role === "ADMIN" || role === "EMPLOYEE";
 export function useEndpoint<T>(schema: z.ZodType<T>, path: string, params: QueryParams = {}, enabled = true) {
